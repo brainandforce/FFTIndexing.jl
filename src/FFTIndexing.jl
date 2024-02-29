@@ -1,76 +1,133 @@
 module FFTIndexing
 
-using AbstractFFTs
-
-import Base: length, size, axes, getindex, IndexStyle
-import Base: Tuple, OneTo, CartesianIndices
+import Base: length, size, axes, getindex, convert, to_index, to_indices
+import Base: Tuple, OneTo, CartesianIndices, IndexStyle
 
 # TODO: should this subtype Base.AbstractCartesianIndex{D}?
 """
     AbstractFFTIndex{D}
 
-Supertype for `FFTIndex{D}` and `NormalizedFFTIndex{D}`.
+Supertype for array indices that correspond to the frequency bins constructed by performing a
+Fourier transform of an array. This includes `FFTIndex{D}` and `NormalizedFFTIndex{D}`.
+
+# Usage
+
+`AbstractFFTIndex{D}` serves as an index for any object indexable by `CartesianIndex{D}`. Although
+there is no direct method of converting an `AbstractFFTIndex{D}` to a `CartesianIndex{D}`, as that
+requires information about the array being indexed, instances of this type can be used as an
+
+Indexing an array with an `AbstractFFTIndex{D}` is guaranteed to be an inbounds access.
 
 # Interface
 
-For types `T<:AbstractFFTIndex{D}`
+For types `T<:AbstractFFTIndex{D}`:
   * The length of an `AbstractFFTIndex{D}` is always `D`.
-  * `Tuple(::T)` should be defined.
-  * `convert(::Type{<:FFTIndex}, ::T)` should be defined.
+  * The type constructors should accept a `Tuple{Vararg{Integer}}`. You will likely want to define
+constructors that infer type parameters from the input. This will automatically define
+`T(x::Vararg{Integer,D})`.
+  * `Tuple(::T)` should be defined, returning the index as a `NTuple{D,Int}`.
+  * `convert(::Type{<:FFTIndex}, ::T)` should be defined. This is to allow for types that encode
+information about normalization factors to be converted to an `FFTIndex` used by generic indexing
+methods. This will also automatically define `(::Type{<:FFTIndex})(::T)`.
+
+Like `CartesianIndex{D}` in Julia 1.10 and up, `AbstractFFTIndex{D}` is a scalar type
 """
 abstract type AbstractFFTIndex{D}
 end
 
-(::Type{T})(x::Vararg{Integer,D}) where {D,T<:AbstractFFTIndex{D}} = T(x)
+(::Type{T})(x...) where T<:AbstractFFTIndex = T(x)
 
 length(::Type{<:AbstractFFTIndex{D}}) where D = D
 length(x::AbstractFFTIndex) = length(typeof(x))
 
 getindex(x::AbstractFFTIndex, i::Integer) = (@boundscheck checkbounds(x, i); return x.I[i])
 
+# This one's stolen from Julia Base
+function Base.iterate(::AbstractFFTIndex)
+    error(
+        "iteration is deliberately unsupported for AbstractFFTIndex. " * 
+        "Use `I` rather than `I...`, or use `Tuple(I)...`"
+    )
+end
+
 Tuple(x::AbstractFFTIndex) = x.I
+convert(::Type{T}, x::AbstractFFTIndex) where T<:Tuple = x.I
 
 """
     FFTIndex{D} <: AbstractFFTIndex{D}
 
-A index for an array corresponding to an FFT frequency bin along each dimension of an array.
-
-# Use with arrays
-
-Indexing an `AbstractArray{T,D}` with `FFTIndex{D}` is guaranteed to be an inbounds array access,
-as the 
+A index for an array corresponding to an FFT frequency bin along each dimension of an array. These
+frequency bins are integer values which are easily converted to corresponding array indices.
 """
 struct FFTIndex{D} <: AbstractFFTIndex{D}
     I::NTuple{D,Int}
 end
 
-FFTIndex(x::Vararg{Integer,D}) where D = FFTIndex{D}(x)
+FFTIndex(t::Tuple{Vararg{Integer,D}}) where D = FFTIndex{D}(t)
 
-(T::Type{<:FFTIndex})(x::AbstractFFTIndex{D}) where D = convert(T, x)
+Base.show(io::IO, i::FFTIndex) = print(io, FFTIndex, Tuple(i))
+
+#---Machinery for other AbstractFFTIndex features--------------------------------------------------#
+
+(T::Type{<:FFTIndex})(i::AbstractFFTIndex{D}) where D = convert(T, i)
 
 """
-    NormalizedFFTIndex{D}
+    CartesianIndex(i::AbstractFFTIndex, A)
+    CartesianIndex(i::AbstractFFTIndex{D}, inds::Tuple{Vararg{Any,D}})
 
-An index for an array similar to `FFTIndex{D}`, but conveying information about the array size as
-a normalization factor.
+Constructs a `CartesianIndex` corresponding to the the index `i` using information from `A` or a set
+of axes `ax`.
 """
-struct NormalizedFFTIndex{D}
+function (::Type{T})(i::AbstractFFTIndex, ax::Tuple) where T<:CartesianIndex
+    return T(map(x -> mod(x, length.(ax)) + first.(ax), Tuple(FFTIndex(i))))
+end
+
+(::Type{T})(i::AbstractFFTIndex, A) where T<:CartesianIndex = CartesianIndex(i, axes(A))
+
+to_indices(A, I::Tuple{AbstractFFTIndex,Vararg}) = to_indices(A, axes(A), I)
+
+function to_indices(A, inds, I::Tuple{AbstractFFTIndex{D},Vararg}) where D
+    t = map((x,a) -> mod(x, length(a)) + first(a), Tuple(FFTIndex(first(I))), inds[1:D])
+    return (t..., to_indices(A, inds[D:end], I[2:end])...)
+end
+
+#---FFT index normalized by array size-------------------------------------------------------------#
+"""
+    NormalizedFFTIndex{D} <: AbstractFFTIndex{D}
+
+An index for an array similar to `FFTIndex{D}`, but simultaneously including a normalization factor
+calculated from the length of each dimension.
+"""
+struct NormalizedFFTIndex{D} <: AbstractFFTIndex{D}
     I::NTuple{D,Rational{Int}}
 end
 
-NormalizedFFTIndex(x::Vararg{Integer,D}) where D = NormalizedFFTIndex{D}(x)
+NormalizedFFTIndex(t::Tuple{Vararg{Real,D}}) where D = NormalizedFFTIndex{D}(t)
 
-Base.convert(::Type{<:FFTIndex}, x::NormalizedFFTIndex{D}) where D = FFTIndex(numerator.(x.I))
+(::Type{T})(A, i::FFTIndex) where T<:NormalizedFFTIndex = T(Tuple(i) .// size(A))
 
-#---Using FFTIndex{D}------------------------------------------------------------------------------#
+convert(::Type{<:FFTIndex}, i::NormalizedFFTIndex{D}) where D = FFTIndex(numerator.(i.I))
 
+function to_index(A, i::NormalizedFFTIndex)
+    factors = denominator.(i.I)
+    factors === size(A) || @warn(
+        string(
+            "Normalization factors do not match the array dimensions:\n" * 
+            "Index indicates size $factors; size of the indexed object is $(size(A))."
+        )
+    )
+    return to_index(A, FFTIndex(i))
+end
+
+#---FFTAxis{D}-------------------------------------------------------------------------------------#
 """
     FFTAxis <: AbstractVector{Int}
 
 The one-dimensional counterpart to `FFTIndices`, supporting only a single dimension. Its elements
 are plain `Int` types rather than the `CartesianIndex` of `FFTIndices`.
 
-In essence, it serves as an analog to `Base.OneTo`.
+This type serves as an analog to `Base.OneTo` which is usually returned by `axes`; this package
+provides `fftaxes` to serve the same purpose.
 
 # Examples
 ```
@@ -161,7 +218,7 @@ Base.iterate(r::FFTIndices, i = 1) = ifelse(i in eachindex(r), (r[i], i+1), noth
 
 #---Exports----------------------------------------------------------------------------------------#
 
-export AbstractFFTIndex, NormalizedFFTIndex, FFTAxis, FFTIndices
+export AbstractFFTIndex, FFTIndex, NormalizedFFTIndex, FFTAxis, FFTIndices
 export fftaxes
 
 end
