@@ -30,7 +30,8 @@ constructors that infer type parameters from the input. This will automatically 
 information about normalization factors to be converted to an `FFTIndex` used by generic indexing
 methods. This will also automatically define `(::Type{<:FFTIndex})(::T)`.
 
-Like `CartesianIndex{D}` in Julia 1.10 and up, `AbstractFFTIndex{D}` is a scalar type
+Like `CartesianIndex{D}` in Julia 1.10 and up, `AbstractFFTIndex{D}` is a scalar type. To iterate
+through its components, convert it to a `Tuple` with the `Tuple` constructor.
 """
 abstract type AbstractFFTIndex{D}
 end
@@ -92,6 +93,7 @@ function to_indices(A, inds, I::Tuple{AbstractFFTIndex{D},Vararg}) where D
 end
 
 #---FFT index normalized by array size-------------------------------------------------------------#
+#=
 """
     NormalizedFFTIndex{D} <: AbstractFFTIndex{D}
 
@@ -99,14 +101,16 @@ An index for an array similar to `FFTIndex{D}`, but simultaneously including a n
 calculated from the length of each dimension.
 """
 struct NormalizedFFTIndex{D} <: AbstractFFTIndex{D}
-    I::NTuple{D,Rational{Int}}
+    # I::NTuple{D,Rational{Int}} can't be used because it simplifies!
+    inds::FFTIndex{D}
+    size::NTuple{D,Int}
 end
 
 NormalizedFFTIndex(t::Tuple{Vararg{Real,D}}) where D = NormalizedFFTIndex{D}(t)
 
-(::Type{T})(A, i::FFTIndex) where T<:NormalizedFFTIndex = T(Tuple(i) .// size(A))
+(::Type{T})(A, i::FFTIndex) where T<:NormalizedFFTIndex = i.inds
 
-convert(::Type{<:FFTIndex}, i::NormalizedFFTIndex{D}) where D = FFTIndex(numerator.(i.I))
+convert(::Type{<:FFTIndex}, i::NormalizedFFTIndex{D}) where D = i.inds
 
 function to_index(A, i::NormalizedFFTIndex)
     factors = denominator.(i.I)
@@ -118,7 +122,7 @@ function to_index(A, i::NormalizedFFTIndex)
     )
     return to_index(A, FFTIndex(i))
 end
-
+=#
 #---FFTAxis{D}-------------------------------------------------------------------------------------#
 """
     FFTAxis <: AbstractVector{Int}
@@ -150,10 +154,7 @@ axes(r::FFTAxis) = (OneTo(r.size),)
 size(r::FFTAxis) = (r.size,)
 IndexStyle(::Type{<:FFTAxis}) = IndexLinear()
 
-function Base.getindex(r::FFTAxis, i::Integer)
-    return mod(i + div(length(r), 2) - 1, length(r)) - div(length(r), 2)
-end
-
+getindex(r::FFTAxis, i::Integer) = mod(i + div(length(r), 2) - 1, length(r)) - div(length(r), 2)
 getindex(r::FFTAxis, i::CartesianIndex{1}) = r[only(i.I)]
 
 Base.iterate(r::FFTAxis, i = 1) = i in eachindex(r) ? (r[i], i+1) : nothing
@@ -162,11 +163,19 @@ Base.iterate(r::FFTAxis, i = 1) = i in eachindex(r) ? (r[i], i+1) : nothing
 Base.sort(r::FFTAxis) = range(minimum(r), stop = maximum(r))
 
 """
-    fftaxes(a::AbstractArray{T,D}) -> NTuple{D,FFTAxis}
+    fftaxes(a, d) -> FFTAxis
 
-Returns a set of `FFTAxis` objects associated with an array `a`.
+Returns an `FFTAxis` associated with an object `a` along dimension `d`. This is calculated from
+`size(a, d)`.
 """
-fftaxes(a::AbstractArray) = FFTAxis.(size(a))
+fftaxes(a, d) = FFTAxis(size(a, d))
+
+"""
+    fftaxes(a) -> NTuple{D,FFTAxis}
+
+Returns a set of `FFTAxis` objects associated with an object `a`. This is calculated from `size(a)`.
+"""
+fftaxes(a) = FFTAxis.(size(a))
 
 #---Analog to `CartesianIndices{D}`----------------------------------------------------------------#
 """
@@ -182,16 +191,16 @@ dimension are negative, matching the output of `FFTW.fftfreq`.
 ```
 julia> FFTIndices(4)
 4-element FFTIndices{1}:
- CartesianIndex(0,)
- CartesianIndex(1,)
- CartesianIndex(-2,)
- CartesianIndex(-1,)
+ FFTIndex(0,)
+ FFTIndex(1,)
+ FFTIndex(-2,)
+ FFTIndex(-1,)
 
 julia> FFTIndices(3, 3)
 3×3 FFTIndices{2}:
- CartesianIndex(0, 0)   CartesianIndex(0, 1)   CartesianIndex(0, -1)
- CartesianIndex(1, 0)   CartesianIndex(1, 1)   CartesianIndex(1, -1)
- CartesianIndex(-1, 0)  CartesianIndex(-1, 1)  CartesianIndex(-1, -1)
+ FFTIndex(0, 0)   FFTIndex(0, 1)   FFTIndex(0, -1)
+ FFTIndex(1, 0)   FFTIndex(1, 1)   FFTIndex(1, -1)
+ FFTIndex(-1, 0)  FFTIndex(-1, 1)  FFTIndex(-1, -1)
 ```
 """
 struct FFTIndices{D} <: AbstractArray{FFTIndex{D},D}
@@ -218,7 +227,7 @@ Base.iterate(r::FFTIndices, i = 1) = ifelse(i in eachindex(r), (r[i], i+1), noth
 
 #---Exports----------------------------------------------------------------------------------------#
 
-export AbstractFFTIndex, FFTIndex, NormalizedFFTIndex, FFTAxis, FFTIndices
+export AbstractFFTIndex, FFTIndex, #=NormalizedFFTIndex,=# FFTAxis, FFTIndices
 export fftaxes
 
 end
