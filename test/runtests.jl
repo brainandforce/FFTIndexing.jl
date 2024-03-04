@@ -24,6 +24,8 @@ using Test
         @test_throws DimensionMismatch CartesianIndex(i2, B)
         @test CartesianIndex(i2, axes(B)[1:2]) === CartesianIndex(2, 3)
         @test B[i2, 4] === B[CartesianIndex(i2, axes(B)[1:2]), 4]
+        @test (2, 's')[FFTIndex(0)] === 2
+        @test (2, 's')[FFTIndex(1)] === 's'
     end
     @testset "FFTAxes" begin
         A = [m*n for m in 1:6, n in 1:9]
