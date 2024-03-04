@@ -73,23 +73,39 @@ Base.show(io::IO, i::FFTIndex) = print(io, FFTIndex, Tuple(i))
 (T::Type{<:FFTIndex})(i::AbstractFFTIndex{D}) where D = convert(T, i)
 
 """
+    FFTIndex._cartesian_tuple(i::AbstractFFTIndex, ax::Tuple)
+
+Generates a `Tuple` which may be used to construct a `CartesianIndex` that performs the same
+indexing as `i`. This function is provided separately in case the `CartesianIndex` does not need to
+be constructed and a raw `Tuple` is desired.
+"""
+function _cartesian_tuple(i::AbstractFFTIndex, ax::Tuple)
+    length(i) === length(ax) || throw(
+        DimensionMismatch(
+            "The length of the AbstractFFTIndex must match the number of axes.\n" *
+            "If you are trying to construct a CartesianIndex for specific axes, the axes must be " *
+            "explicitly specified:\n" *
+            "\tCartesianIndex(i, axes(A)[...])    # for indexable object A\n" *
+            "\tCartesianIndex(i, ax[...])         # for list of axes ax"
+        )
+    )
+    return map((x, t) -> mod(x, length(t)) + first(t), Tuple(FFTIndex(i)), ax)
+end
+
+"""
+    CartesianIndex(i::AbstractFFTIndex, inds::Tuple)
     CartesianIndex(i::AbstractFFTIndex, A)
-    CartesianIndex(i::AbstractFFTIndex{D}, inds::Tuple{Vararg{Any,D}})
 
 Constructs a `CartesianIndex` corresponding to the the index `i` using information from `A` or a set
 of axes `ax`.
 """
-function (::Type{T})(i::AbstractFFTIndex, ax::Tuple) where T<:CartesianIndex
-    return T(map((x, t) -> mod(x, length(t)) + first(t), Tuple(FFTIndex(i)), ax))
-end
-
+(::Type{T})(i::AbstractFFTIndex, ax::Tuple) where T<:CartesianIndex = T(_cartesian_tuple(i, ax))
 (::Type{T})(i::AbstractFFTIndex, A) where T<:CartesianIndex = CartesianIndex(i, axes(A))
 
 to_indices(A, I::Tuple{AbstractFFTIndex,Vararg}) = to_indices(A, axes(A), I)
 
 function to_indices(A, inds, I::Tuple{AbstractFFTIndex{D},Vararg}) where D
-    t = map((x,a) -> mod(x, length(a)) + first(a), Tuple(FFTIndex(first(I))), inds[1:D])
-    return (t..., to_indices(A, inds[D:end], I[2:end])...)
+    return (_cartesian_tuple(first(I), inds[1:D])..., to_indices(A, inds[D:end], I[2:end])...)
 end
 
 #---FFT index normalized by array size-------------------------------------------------------------#
