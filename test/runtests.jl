@@ -19,6 +19,11 @@ using Test
         # @test n1 === NormalizedFFTIndex{2}(A, i1)
         # @test n1 === NormalizedFFTIndex(A, i1)
         # @test A[n1] === A[CartesianIndex(3,4)]
+        B = reshape(1:63, 3, 3, 7)
+        i2 = FFTIndex(1, 5)
+        @test_throws DimensionMismatch CartesianIndex(i2, B)
+        @test CartesianIndex(i2, axes(B)[1:2]) === CartesianIndex(2, 3)
+        @test B[i2, 4] === B[CartesianIndex(i2, axes(B)[1:2]), 4]
     end
     @testset "FFTAxes" begin
         A = [m*n for m in 1:6, n in 1:9]
