@@ -32,4 +32,16 @@ using Test
         @test fftaxes(A, 1) === FFTAxis(6)
         @test fftaxes(A, 2) === FFTAxis(9)
     end
+    @testset "FFTIndices" begin
+        A = [m*n for m in 1:6, n in 1:9]
+        @test FFTIndices(A) === FFTIndices((1:6, 1:9))
+        @test FFTIndices(A) === FFTIndices((6, 9))
+        @test size(FFTIndices(A)) === size(A)
+        @test length(FFTIndices(A)) === length(A)
+        @test fftaxes(FFTIndices(A)) === fftaxes(A)
+        @test fftaxes(FFTIndices(A)) === FFTIndices(A).axes
+        @test A[FFTIndices(A)[42]] === A[42]
+        @test A[FFTIndices(A)[42]] === A[CartesianIndices(A)[42]]
+        @test LinearIndices(FFTIndices(A)) === LinearIndices(CartesianIndices(A))
+    end
 end

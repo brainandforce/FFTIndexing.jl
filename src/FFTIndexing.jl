@@ -179,10 +179,12 @@ fftaxes(a) = FFTAxis.(size(a))
 
 #---Analog to `CartesianIndices{D}`----------------------------------------------------------------#
 """
-    FFTIndices{D} <: AbstractArray{CartesianIndex{D},D}
+    FFTIndices{D} <: AbstractArray{FFTIndex{D},D}
 
 An iterable object defining a range of CartesianIndices corresponding to FFT indices. This can be
 used to convert a Cartesian array index to an FFT bin index, or vice versa.
+
+An array of `FFTIndex{D}` objects which correspond to all valid indices of an indexable object.
 
 The outputs use the convention where frequencies at or above the Nyquist frequency for that
 dimension are negative, matching the output of `FFTW.fftfreq`.
@@ -204,26 +206,28 @@ julia> FFTIndices(3, 3)
 ```
 """
 struct FFTIndices{D} <: AbstractArray{FFTIndex{D},D}
-    size::NTuple{D,Int}
+    axes::NTuple{D,FFTAxis}
 end
 
-FFTIndices(x::Tuple{Vararg{Integer,D}}) where D = FFTIndices{D}(Int.(x))
-FFTIndices(x::Tuple{Vararg{UnitRange,D}}) where D = FFTIndices{D}(length.(x))
+FFTIndices(x::Tuple{Vararg{Integer,D}}) where D = FFTIndices{D}(FFTAxis.(x))
+FFTIndices(x::Tuple{Vararg{UnitRange,D}}) where D = FFTIndices{D}(FFTAxis.(x))
 
-FFTIndices(a::AbstractArray) = FFTIndices(size(a))
+FFTIndices(a) = FFTIndices(fftaxes(a))
 
-axes(r::FFTIndices) = OneTo.(r.size)
-size(r::FFTIndices) = r.size
-IndexStyle(::Type{<:FFTIndices}) = IndexLinear()
+size(r::FFTIndices) = length.(r.axes)
+axes(r::FFTIndices) = OneTo.(size(r))
+fftaxes(r::FFTIndices) = r.axes
+fftaxes(r::FFTIndices{D}, d) where D = ifelse(d::Integer <= D, r.axes[d::Integer], FFTAxis(1))
 
-function Base.getindex(r::FFTIndices{D}, i::CartesianIndex{D}) where D
-    return CartesianIndex(mod.(Tuple(i) .+ div.(size(r), 2) .- 1, size(r)) .- div.(size(r), 2))
+function getindex(r::FFTIndices{D}, inds::Vararg{Int,D}) where D
+    @boundscheck checkbounds(r, inds...)
+    return FFTIndex(map((ax, i) -> ax[i], r.axes, inds))
 end
 
-getindex(r::FFTIndices, i::Integer...) = r[CartesianIndex(i)]
-getindex(r::FFTIndices, i::Integer) = r[CartesianIndices(r)[i]]
+Base.@propagate_inbounds getindex(r::FFTIndices, i::Int) = r[CartesianIndices(r)[i]]
 
-Base.iterate(r::FFTIndices, i = 1) = ifelse(i in eachindex(r), (r[i], i+1), nothing)
+# True by default: IndexStyle(::Type{<:FFTIndices}) = IndexCartesian()
+# Base.iterate(r::FFTIndices, i = 1) = ifelse(i in eachindex(r), (r[i], i+1), nothing)
 
 #---Exports----------------------------------------------------------------------------------------#
 
