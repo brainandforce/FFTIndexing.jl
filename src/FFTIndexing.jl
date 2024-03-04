@@ -177,6 +177,8 @@ Returns a set of `FFTAxis` objects associated with an object `a`. This is calcul
 """
 fftaxes(a) = FFTAxis.(size(a))
 
+Base.show(io::IO, r::FFTAxis) = print(io, FFTAxis, '(', r.size, ')')
+
 #---Analog to `CartesianIndices{D}`----------------------------------------------------------------#
 """
     FFTIndices{D} <: AbstractArray{FFTIndex{D},D}

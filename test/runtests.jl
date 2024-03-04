@@ -31,6 +31,7 @@ using Test
         @test fftaxes(A) === (FFTAxis(6), FFTAxis(9))
         @test fftaxes(A, 1) === FFTAxis(6)
         @test fftaxes(A, 2) === FFTAxis(9)
+        @test eval(Meta.parse(repr(fftaxes(A)))) === (FFTAxis(6), FFTAxis(9))
     end
     @testset "FFTIndices" begin
         A = [m*n for m in 1:6, n in 1:9]
