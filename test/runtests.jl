@@ -33,6 +33,10 @@ using Test
         @test all(FFTAxis(5) .== [0, 1, 2, -2, -1])
         @test length(FFTAxis(4)) === 4
         @test length(FFTAxis(5)) === 5
+        @test minimum(FFTAxis(4)) === -2
+        @test minimum(FFTAxis(5)) === -2
+        @test maximum(FFTAxis(4)) === 1
+        @test maximum(FFTAxis(5)) === 2
         @test sort(FFTAxis(4)) == -2:1
         @test sort(FFTAxis(5)) == -2:2
         @test fftaxes(A) === (FFTAxis(6), FFTAxis(9))
