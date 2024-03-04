@@ -80,7 +80,7 @@ Constructs a `CartesianIndex` corresponding to the the index `i` using informati
 of axes `ax`.
 """
 function (::Type{T})(i::AbstractFFTIndex, ax::Tuple) where T<:CartesianIndex
-    return T(map(x -> mod(x, length.(ax)) + first.(ax), Tuple(FFTIndex(i))))
+    return T(map((x, t) -> mod(x, length(t)) + first(t), Tuple(FFTIndex(i)), ax))
 end
 
 (::Type{T})(i::AbstractFFTIndex, A) where T<:CartesianIndex = CartesianIndex(i, axes(A))
