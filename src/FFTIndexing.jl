@@ -44,9 +44,9 @@ length(x::AbstractFFTIndex) = length(typeof(x))
 getindex(x::AbstractFFTIndex, i::Integer) = (@boundscheck checkbounds(x, i); return x.I[i])
 
 # This one's stolen from Julia Base
-function Base.iterate(::AbstractFFTIndex)
+function Base.iterate(::T) where T<:AbstractFFTIndex
     error(
-        "iteration is deliberately unsupported for AbstractFFTIndex. " * 
+        "Like CartesianIndex, iteration is deliberately unsupported for $T. " * 
         "Use `I` rather than `I...`, or use `Tuple(I)...`"
     )
 end
