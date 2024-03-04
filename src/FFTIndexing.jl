@@ -108,6 +108,10 @@ function to_indices(A, inds, I::Tuple{AbstractFFTIndex{D},Vararg}) where D
     return (_cartesian_tuple(first(I), inds[1:D])..., to_indices(A, inds[D:end], I[2:end])...)
 end
 
+# Remove bounds checks when only indexing with AbstractFFTIndex
+getindex(A::AbstractArray, i::AbstractFFTIndex...) = @inbounds A[map(x -> CartesianIndex(x, A), i)]
+getindex(t::Tuple, i::AbstractFFTIndex{1}) = @inbounds t[CartesianIndex(i, only(axes(t)))]
+
 #---FFT index normalized by array size-------------------------------------------------------------#
 #=
 """
