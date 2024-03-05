@@ -54,6 +54,9 @@ end
 Tuple(x::AbstractFFTIndex) = x.I
 convert(::Type{T}, x::AbstractFFTIndex) where T<:Tuple = x.I
 
+# Needed to get around the standard vector pretty print implementation
+Base.show(io::IO, ::MIME"text/plain", i::AbstractFFTIndex) = show(io, i)
+
 """
     FFTIndex{D} <: AbstractFFTIndex{D}
 
@@ -66,7 +69,10 @@ end
 
 FFTIndex(t::Tuple{Vararg{Integer,D}}) where D = FFTIndex{D}(t)
 
-Base.show(io::IO, i::FFTIndex) = print(io, FFTIndex, Tuple(i))
+function Base.show(io::IO, i::FFTIndex)
+    print(io, FFTIndex)
+    isone(length(i)) ? print(io, '(', only(i.I), ')') : print(io, i.I)
+end
 
 #---Machinery for other AbstractFFTIndex features--------------------------------------------------#
 
