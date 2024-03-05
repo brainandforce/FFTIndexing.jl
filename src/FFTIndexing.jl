@@ -244,7 +244,7 @@ FFTIndices(a) = FFTIndices(fftaxes(a))
 size(r::FFTIndices) = length.(r.axes)
 axes(r::FFTIndices) = OneTo.(size(r))
 fftaxes(r::FFTIndices) = r.axes
-fftaxes(r::FFTIndices{D}, d) where D = ifelse(d::Integer <= D, r.axes[d::Integer], FFTAxis(1))
+fftaxes(r::FFTIndices{D}, d) where D = (d::Integer <= D ? r.axes[d::Integer] : FFTAxis(1))
 
 function getindex(r::FFTIndices{D}, inds::Vararg{Int,D}) where D
     @boundscheck checkbounds(r, inds...)
