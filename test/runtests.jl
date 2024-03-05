@@ -12,6 +12,8 @@ using Test
         @test i1 === FFTIndex{2}(2,3)
         @test i1 === FFTIndex((2,3))
         @test i1 === FFTIndex(2,3)
+        @test i1[1] === 2
+        @test_throws ErrorException iterate(i1)
         @test A[i1] === A[CartesianIndex(3,4)]
         # @test n1 === NormalizedFFTIndex{2}(2//6, 3//9)
         # @test n1 === NormalizedFFTIndex((2//6, 3//9))
@@ -52,6 +54,8 @@ using Test
         @test length(FFTIndices(A)) === length(A)
         @test fftaxes(FFTIndices(A)) === fftaxes(A)
         @test fftaxes(FFTIndices(A)) === FFTIndices(A).axes
+        @test fftaxes(FFTIndices(A), 1) === FFTAxis(6)
+        @test fftaxes(FFTIndices(A), 3) === FFTAxis(1)
         @test A[FFTIndices(A)[42]] === A[42]
         @test A[FFTIndices(A)[42]] === A[CartesianIndices(A)[42]]
         @test LinearIndices(FFTIndices(A)) === LinearIndices(CartesianIndices(A))
