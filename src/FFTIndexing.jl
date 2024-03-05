@@ -183,8 +183,7 @@ axes(r::FFTAxis) = (OneTo(r.size),)
 size(r::FFTAxis) = (r.size,)
 IndexStyle(::Type{<:FFTAxis}) = IndexLinear()
 
-getindex(r::FFTAxis, i::Integer) = mod(i + div(length(r), 2) - 1, length(r)) - div(length(r), 2)
-getindex(r::FFTAxis, i::CartesianIndex{1}) = r[only(i.I)]
+getindex(r::FFTAxis, i::Int) = mod(i + div(length(r), 2) - 1, length(r)) - div(length(r), 2)
 
 Base.iterate(r::FFTAxis, i = 1) = i in eachindex(r) ? (r[i], i+1) : nothing
 
