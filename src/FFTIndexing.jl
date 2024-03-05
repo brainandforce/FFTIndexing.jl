@@ -41,7 +41,7 @@ end
 length(::Type{<:AbstractFFTIndex{D}}) where D = D
 length(x::AbstractFFTIndex) = length(typeof(x))
 
-getindex(x::AbstractFFTIndex, i::Integer) = (@boundscheck checkbounds(x, i); return x.I[i])
+getindex(x::AbstractFFTIndex, i::Int) = x.I[i]
 
 # This one's stolen from Julia Base
 function Base.iterate(::T) where T<:AbstractFFTIndex
