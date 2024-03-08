@@ -120,6 +120,11 @@ function getindex(A::AbstractArray, i::AbstractFFTIndex...)
     return @inbounds A[inds...]
 end
 
+function getindex(A::AbstractArray{<:Any,D}, i::AbstractFFTIndex{D}) where D
+    inds = _cartesian_tuple(i, axes(A))
+    return @inbounds A[inds...]
+end
+
 getindex(t::Tuple, i::AbstractFFTIndex{1}) = @inbounds t[CartesianIndex(i, only(axes(t)))]
 
 #---FFT index normalized by array size-------------------------------------------------------------#
