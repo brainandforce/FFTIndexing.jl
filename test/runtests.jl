@@ -60,5 +60,7 @@ using Test
         @test A[FFTIndices(A)[42]] === A[42]
         @test A[FFTIndices(A)[42]] === A[CartesianIndices(A)[42]]
         @test LinearIndices(FFTIndices(A)) === LinearIndices(CartesianIndices(A))
+        # This is to check method ambiguities
+        @test FFTIndices(tuple()) isa FFTIndices{0}
     end
 end

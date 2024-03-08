@@ -243,6 +243,8 @@ end
 
 FFTIndices(x::Tuple{Vararg{Integer,D}}) where D = FFTIndices{D}(FFTAxis.(x))
 FFTIndices(x::Tuple{Vararg{UnitRange,D}}) where D = FFTIndices{D}(FFTAxis.(x))
+# Method ambiguity resolution
+FFTIndices(::Tuple{}) = FFTIndices{0}(tuple())
 
 FFTIndices(a) = FFTIndices(fftaxes(a))
 
