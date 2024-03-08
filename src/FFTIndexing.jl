@@ -116,7 +116,8 @@ end
 
 # Remove bounds checks when only indexing with AbstractFFTIndex
 function getindex(A::AbstractArray, i::AbstractFFTIndex...)
-    return @inbounds A[map(x -> CartesianIndex(x, A), i)...]
+    inds = map(x -> CartesianIndex(x, A), i)
+    return @inbounds A[inds...]
 end
 
 getindex(t::Tuple, i::AbstractFFTIndex{1}) = @inbounds t[CartesianIndex(i, only(axes(t)))]
