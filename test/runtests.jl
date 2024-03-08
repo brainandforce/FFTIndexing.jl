@@ -57,6 +57,7 @@ using Test
         @test fftaxes(FFTIndices(A)) === FFTIndices(A).axes
         @test fftaxes(FFTIndices(A), 1) === FFTAxis(6)
         @test fftaxes(FFTIndices(A), 3) === FFTAxis(1)
+        @test A[FFTIndices(A)] == A
         @test A[FFTIndices(A)[42]] === A[42]
         @test A[FFTIndices(A)[42]] === A[CartesianIndices(A)[42]]
         @test LinearIndices(FFTIndices(A)) === LinearIndices(CartesianIndices(A))
