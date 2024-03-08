@@ -114,6 +114,8 @@ function to_indices(A, inds, I::Tuple{AbstractFFTIndex{D},Vararg}) where D
     return (_cartesian_tuple(first(I), inds[1:D])..., to_indices(A, inds[D:end], I[2:end])...)
 end
 
+Base.checkindex(::Type{Bool}, inds::AbstractUnitRange, ::FFTIndex) = true
+
 # Remove bounds checks when only indexing with AbstractFFTIndex
 function getindex(A::AbstractArray, i::AbstractFFTIndex...)
     inds = map(x -> CartesianIndex(x, A), i)
