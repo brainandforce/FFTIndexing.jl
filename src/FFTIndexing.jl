@@ -111,7 +111,7 @@ of axes `ax`.
 to_indices(A, I::Tuple{AbstractFFTIndex,Vararg}) = to_indices(A, axes(A), I)
 
 function to_indices(A, inds, I::Tuple{AbstractFFTIndex{D},Vararg}) where D
-    return (_cartesian_tuple(first(I), inds[1:D])..., to_indices(A, inds[D:end], I[2:end])...)
+    return (_cartesian_tuple(first(I), inds[1:D])..., to_indices(A, inds[D+1:end], I[2:end])...)
 end
 
 Base.checkindex(::Type{Bool}, inds::AbstractUnitRange, ::FFTIndex) = true
