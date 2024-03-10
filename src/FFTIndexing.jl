@@ -116,16 +116,16 @@ end
 
 Base.checkindex(::Type{Bool}, inds::AbstractUnitRange, ::FFTIndex) = true
 
-# Remove bounds checks when only indexing with AbstractFFTIndex
-function getindex(A::AbstractArray, i::AbstractFFTIndex...)
-    inds = map(x -> CartesianIndex(x, A), i)
-    return @inbounds A[inds...]
-end
+#= Remove bounds checks when only indexing with AbstractFFTIndex
+    I found that these methods don't change the speed or lowered code at all
+    TODO: why is this type piracy as reported by the VSCode extension?
+getindex(A::AbstractArray, i::AbstractFFTIndex...) = @inbounds A[to_indices(A, i)...]
 
 function getindex(A::AbstractArray{<:Any,D}, i::AbstractFFTIndex{D}) where D
     inds = _cartesian_tuple(i, axes(A))
     return @inbounds A[inds...]
 end
+=#
 
 getindex(t::Tuple, i::AbstractFFTIndex{1}) = @inbounds t[CartesianIndex(i, only(axes(t)))]
 
