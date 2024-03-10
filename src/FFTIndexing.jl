@@ -76,7 +76,9 @@ end
 
 #---Machinery for other AbstractFFTIndex features--------------------------------------------------#
 
-(T::Type{<:FFTIndex})(i::AbstractFFTIndex{D}) where D = convert(T, i)
+# Two separate methods to resolve ambiguities
+(T::Type{FFTIndex})(i::AbstractFFTIndex{D}) where D = convert(T, i)
+(T::Type{FFTIndex{D}})(i::AbstractFFTIndex{D}) where D = convert(T, i)
 
 """
     FFTIndex._cartesian_tuple(i::AbstractFFTIndex, ax::Tuple)
