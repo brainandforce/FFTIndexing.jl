@@ -5,7 +5,7 @@ using Test
     @testset "AbstractFFTIndex" begin
         @test FFTIndex <: AbstractFFTIndex
         # @test NormalizedFFTIndex <: AbstractFFTIndex
-        A = [m*n for m in 1:6, n in 1:9]
+        A = reshape(1:54, 6, 9)
         c1 = CartesianIndex(3,4)
         i1 = FFTIndex{2}((2,3))
         # n1 = NormalizedFFTIndex{2}((2//6, 3//9))
@@ -31,7 +31,7 @@ using Test
         @test eval(Meta.parse(repr(i1))) === i1
     end
     @testset "FFTAxes" begin
-        A = [m*n for m in 1:6, n in 1:9]
+        A = reshape(1:54, 6, 9)
         @test all(FFTAxis(4) .== [0, 1, -2, -1])
         @test all(FFTAxis(5) .== [0, 1, 2, -2, -1])
         @test length(FFTAxis(4)) === 4
@@ -48,7 +48,7 @@ using Test
         @test eval(Meta.parse(repr(fftaxes(A)))) === (FFTAxis(6), FFTAxis(9))
     end
     @testset "FFTIndices" begin
-        A = [m*n for m in 1:6, n in 1:9]
+        A = reshape(1:54, 6, 9)
         @test FFTIndices(A) === FFTIndices((1:6, 1:9))
         @test FFTIndices(A) === FFTIndices((6, 9))
         @test size(FFTIndices(A)) === size(A)
