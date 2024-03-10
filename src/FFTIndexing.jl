@@ -271,6 +271,10 @@ Base.@propagate_inbounds getindex(r::FFTIndices, i::Int) = r[CartesianIndices(r)
 # True by default: IndexStyle(::Type{<:FFTIndices}) = IndexCartesian()
 # Base.iterate(r::FFTIndices, i = 1) = ifelse(i in eachindex(r), (r[i], i+1), nothing)
 
+# Override default print method for AbstractArray subtypes
+Base.show(io::IO, inds::FFTIndices) = print(io, FFTIndices, '(', size(inds), ')')
+Base.show(io::IO, ::MIME"text/plain", inds::FFTIndices) = show(io, inds)
+
 #---Exports----------------------------------------------------------------------------------------#
 
 export AbstractFFTIndex, FFTIndex, #=NormalizedFFTIndex,=# FFTAxis, FFTIndices
