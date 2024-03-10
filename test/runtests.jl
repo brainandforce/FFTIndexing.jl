@@ -1,5 +1,7 @@
 using FFTIndexing
-using Test
+using Aqua, Test
+
+Aqua.test_all(FFTIndexing)
 
 @testset "All tests" begin
     @testset "AbstractFFTIndex" begin

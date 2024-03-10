@@ -2,6 +2,7 @@
 
 [![CI status][ci-status-img]][ci-status-url]
 [![Codecov][codecov-img]][codecov-url]
+[![Aqua.jl][aqua-img]][aqua-url]
 
 A package providing types that assist with indexing objects in a manner that allows for convenient
 interpretation of the results of Fourier transforms.
