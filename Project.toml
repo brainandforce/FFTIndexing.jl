@@ -1,7 +1,7 @@
 name = "FFTIndexing"
 uuid = "71991d8d-1ef0-4564-8bfb-550f91a1a974"
 authors = ["Brandon Flores <bsflores@wisc.edu>"]
-version = "0.1.1-dev"
+version = "0.1.1"
 
 [compat]
 Aqua = "0.8"
