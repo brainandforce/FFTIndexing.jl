@@ -43,7 +43,9 @@ Aqua.test_all(FFTIndexing)
         @test maximum(FFTAxis(4)) === 1
         @test maximum(FFTAxis(5)) === 2
         @test sort(FFTAxis(4)) == -2:1
+        @test sort(FFTAxis(4), rev = true) == 1:-1:-2
         @test sort(FFTAxis(5)) == -2:2
+        @test sort(FFTAxis(5), rev = true) == 2:-1:-2
         @test fftaxes(A) === (FFTAxis(6), FFTAxis(9))
         @test fftaxes(A, 1) === FFTAxis(6)
         @test fftaxes(A, 2) === FFTAxis(9)

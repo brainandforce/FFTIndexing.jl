@@ -5,6 +5,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+  - Support for the `rev` keyword in `sort(::FFTAxis)`.
+
 ## [0.1.1] - 2024-03-10
 
 ### Added

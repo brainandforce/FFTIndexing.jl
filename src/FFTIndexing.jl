@@ -199,8 +199,12 @@ Base.iterate(r::FFTAxis, i = 1) = i in eachindex(r) ? (r[i], i+1) : nothing
 
 Base.minimum(r::FFTAxis) = -div(length(r), 2)
 Base.maximum(r::FFTAxis) = div(length(r) - 1, 2)
+
 # For Julia 1.6 compatibility: must use keyword arguments
-Base.sort(r::FFTAxis) = range(minimum(r), stop = maximum(r))
+function Base.sort(r::FFTAxis; rev::Bool = false)
+    result = range(minimum(r), stop = maximum(r))
+    return ifelse(rev, reverse(result), result)
+end
 
 """
     fftaxes(a, d) -> FFTAxis
